@@ -132,7 +132,7 @@ def register_to_onavg(
         ]
         subprocess.check_output(cmd)
 
-if __name__ == '__main__':
+def main():
     parser = ArgumentParser()
     parser.add_argument("HCPdir", help="path to post-HCP subject folders")
     parser.add_argument("subject", help="subject to register individual surface to onavg")
@@ -154,3 +154,6 @@ if __name__ == '__main__':
     register_to_onavg(hcp_dir, subject, surface, den, cache_dir)
     print(f"registration success, saved to {hcp_dir}/{subject}/MNINonLinear/onavg/{subject}.?.{surface}.onavg-{den}.surf.gii")
     exit(0)
+    
+if __name__ == '__main__':
+    main()

@@ -7,8 +7,8 @@ requires =[
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "onavg-ind"
-dynamic = ["version"]
+name = "onavg_ind"
+version = "0.0.2"
 authors = [
     { name="Ma Feilong", email="mafeilong@gmail.com" },
     { name="Nikitas Koussis", email="nikitas.koussis@gmail.com" },
@@ -38,12 +38,15 @@ dependencies =[
     "neuroboros",
 ]
 
+[project.scripts]
+onavg_register = "onavg_ind.register:main"
+
 [project.urls]
 "Homepage" = "https://github.com/nikitas-k/onavg-ind"
 "Bug Tracker" = "https://github.com/nikitas-k/onavg-ind/issues"
 
-[tool.setuptools.packages.find]
-where = ["onavg-ind"]
+#[tool.setuptools.packages.find]
+#where = ["onavg_ind"]
 
 [tools.setuptools_scm]
 write_to = "onavg-ind/_version.py"

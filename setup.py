@@ -1,5 +1,5 @@
 from setuptools import setup
 
 setup(
-    name="onavg-ind"
+    name="onavg_ind"
 )
