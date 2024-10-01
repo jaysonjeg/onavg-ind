@@ -136,8 +136,8 @@ def main():
     parser = ArgumentParser()
     parser.add_argument("HCPdir", help="path to post-HCP subject folders")
     parser.add_argument("subject", help="subject to register individual surface to onavg")
-    parser.add_argument("surface", default="midthickness", metavar="midthickness pial white", help="surface to register")
-    parser.add_argument("density", default='ico128', metavar="ico128 ico16 ico32 ico64", help="specify which onavg density to register individual surface")
+    parser.add_argument("surface", default="midthickness", metavar="surface", help="surface to register [ midthickness | pial | white ]")
+    parser.add_argument("density", default='ico128', metavar="density", help="specify which onavg density to register individual surface [ ico128 | ico16 | ico32 | ico64]")
     parser.add_argument("--cache-dir", default=None, help="download cache directory for onavg and HCP standard surfaces. defaults to ~/onavg-template")
 
     args = parser.parse_args()
