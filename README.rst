@@ -7,3 +7,5 @@ for individual surface refinement and registration.
 Currently, this only functions as a clunky registration tool to go from individual HCP-Native space to onavg space (but not backwards, lol)
 
 Active development - everything subject to change.
+
+Install with ``pip install onavg_ind``
