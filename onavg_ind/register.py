@@ -88,9 +88,9 @@ def register_to_onavg(
             "wb_command",
             "-surface-sphere-project-unproject",
             Path(native_dir, f"{subject}.{h}.sphere.MSMAll.native.surf.gii").resolve(),
-            Path(HCPPIPEDIR, "global", "templates", "standard_mesh_atlases", f"fsaverage.{h}_LR.spherical_std.{atlas[1]}_fs_LR.surf.gii").resolve(),
-            Path(HCPPIPEDIR, "global", "templates", "standard_mesh_atlases", "resample_fsaverage", f"fs_LR-deformed_to-fsaverage.{h}.sphere.{atlas[1]}_fs_LR.surf.gii").resolve(),
-            Path(outdir, f"{subject}.{h}.sphere.{atlas[0]}_{atlas[1]}.native.surf.gii").resolve()
+            Path(HCPPIPEDIR, "global", "templates", "standard_mesh_atlases", f"fsaverage.{h}_LR.spherical_std.164k_fs_LR.surf.gii").resolve(),
+            Path(HCPPIPEDIR, "global", "templates", "standard_mesh_atlases", "resample_fsaverage", f"fs_LR-deformed_to-fsaverage.{h}.sphere.164k_fs_LR.surf.gii").resolve(),
+            Path(outdir, f"{subject}.{h}.sphere.fsaverage_164k.native.surf.gii").resolve()
         ]
         subprocess.check_output(cmd)
 
@@ -99,7 +99,7 @@ def register_to_onavg(
             "wb_command",
             "-surface-resample",
             Path(native_dir, f"{subject}.{h}.{surface}.native.surf.gii").resolve(),
-            Path(outdir, f"{subject}.{h}.sphere.{atlas[0]}_{atlas[1]}.native.surf.gii").resolve(),
+            Path(outdir, f"{subject}.{h}.sphere.fsaverage_164k.native.surf.gii").resolve(),
             Path(HCPPIPEDIR, "global", "templates", "standard_mesh_atlases", "resample_fsaverage", f"{atlas[0]}_std_sphere.{h}.{atlas[1]}_fsavg_{h}.surf.gii").resolve(),
             "BARYCENTRIC",
             Path(outdir, f"{subject}.{h}.{surface}.{atlas[1]}_fsavg_{h}.surf.gii").resolve()
@@ -108,7 +108,7 @@ def register_to_onavg(
 
         # now register onavg sphere to fsaverage
         onavg_sph = Sphere(*read_geometry(str(Path(cache_dir, f"onavg-{den}", "surf", f"{hemi}.sphere.reg").resolve())))
-        fs_sph = Sphere.from_gifti(str(Path(HCPPIPEDIR, "global", "templates", "standard_mesh_atlases", "resample_fsaverage" f"{atlas[0]}_std_sphere.{h}.{atlas[1]}_fsavg_{h}.surf.gii").resolve()))
+        fs_sph = Sphere.from_gifti(str(Path(HCPPIPEDIR, "global", "templates", "standard_mesh_atlases", "resample_fsaverage", f"{atlas[0]}_std_sphere.{h}.{atlas[1]}_fsavg_{h}.surf.gii").resolve()))
         #mid = Surface.from_gifti('surfaces/100206.L.midthickness.native.surf.gii')
 
         ## register
@@ -152,7 +152,7 @@ def main():
 
     # main
     register_to_onavg(hcp_dir, subject, surface, den, cache_dir)
-    print(f"registration success, saved to {hcp_dir}/{subject}/MNINonLinear/onavg/{subject}.?.{surface}.onavg-{den}.surf.gii")
+    print(f"registration success, saved to {hcp_dir}/{subject}/MNINonLinear/onavg/{subject}.L|R.{surface}.onavg-{den}.surf.gii")
     exit(0)
     
 if __name__ == '__main__':

@@ -135,5 +135,5 @@ def get_onavg(cache_dir):
     response = requests.get(url)
     response.raise_for_status()
     
-    with zipfile.ZipFile(io.BytesIO(file)) as z:
+    with zipfile.ZipFile(io.BytesIO(response.content)) as z:
         z.extractall(cache_dir)
