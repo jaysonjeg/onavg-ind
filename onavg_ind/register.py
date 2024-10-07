@@ -113,12 +113,12 @@ def register_to_onavg(
 
         ## register
         if not Path.exists(Path(cache_dir, f"tpl-onavg_hemi-{h}_den-{atlas[1]}_sphere-{atlas[0]}.surf.gii").resolve()):
-            onavg_to_fs_mat = onavg_sph.barycentric(fs_sph.coords)
-            onavg_fs_coords = onavg_sph.coords.T @ onavg_to_fs_mat
-            onavg_fs_coords = onavg_fs_coords.T
+            fs_to_onavg_mat = fs_sph.barycentric(onavg_sph.coords)
+            fs_onavg_coords = fs_sph.coords.T @ fs_to_onavg_mat
+            fs_onavg_coords = fs_onavg_coords.T
 
-            onavg_fs_sph = Sphere(onavg_fs_coords, fs_sph.faces)
-            onavg_fs_sph.to_gifti(str(Path(cache_dir, f"tpl-onavg_hemi-{h}_den-{atlas[1]}_sphere-{atlas[0]}.surf.gii").resolve()))
+            fs_onavg_sph = Sphere(fs_onavg_coords, onavg_sph.faces)
+            fs_onavg_sph.to_gifti(str(Path(cache_dir, f"tpl-onavg_hemi-{h}_den-{atlas[1]}_sphere-{atlas[0]}.surf.gii").resolve()))
 
         # perform final register
         cmd = [
