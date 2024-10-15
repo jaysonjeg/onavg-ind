@@ -87,7 +87,7 @@ def register_to_onavg(
         cmd = [
             "wb_command",
             "-surface-sphere-project-unproject",
-            Path(native_dir, f"{subject}.{h}.sphere.MSMAll.native.surf.gii").resolve(),
+            Path(native_dir, f"{subject}.{h}.sphere.MSMSulc.native.surf.gii").resolve(),
             Path(HCPPIPEDIR, "global", "templates", "standard_mesh_atlases", f"fsaverage.{h}_LR.spherical_std.164k_fs_LR.surf.gii").resolve(),
             Path(HCPPIPEDIR, "global", "templates", "standard_mesh_atlases", "resample_fsaverage", f"fs_LR-deformed_to-fsaverage.{h}.sphere.164k_fs_LR.surf.gii").resolve(),
             Path(outdir, f"{subject}.{h}.sphere.fsaverage_164k.native.surf.gii").resolve()
