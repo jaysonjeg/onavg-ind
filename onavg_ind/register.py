@@ -24,6 +24,7 @@ def register_to_onavg(
         subject: str, 
         surface: str = 'midthickness',
         den: str = 'ico128', 
+        den_fsavg: str = 'ico128',
         cache_dir: Path | str = None):
     
     """
@@ -47,6 +48,8 @@ def register_to_onavg(
         Surface to register to onavg standard. Default 'midthickness'.
     den : str, optional
         onavg standard density. Choices are 'ico128', 'ico16', 'ico32', 'ico64'. Default 'ico128'. 
+    den_fsavg: str, optional
+        fsavg standard density. Choices are 'ico128', 'ico16', 'ico32', 'ico64'. Default 'ico128'.
     cache_dir : pathlib.Path or str, optional
         Directory to store onavg and standard freesurfer files for function. If None, defaults to ~/onavg-template. Default None.
 
@@ -81,13 +84,21 @@ def register_to_onavg(
     den_ind = DENSITIES.index(den)
     atlas = list(ATLAS.items())[den_ind]
 
+    den_ind_fsavg = DENSITIES.index(den_fsavg)
+    atlas_fsavg = list(ATLAS.items())[den_ind_fsavg]
+
     # set up transforms
     for hemi, h in zip(['lh', 'rh'], ['L', 'R']):
+
+        #Set up some file paths
+        fsavg_std_sphere_path = Path(HCPPIPEDIR, "global", "templates", "standard_mesh_atlases", "resample_fsaverage", f"{atlas_fsavg[0]}_std_sphere.{h}.{atlas_fsavg[1]}_fsavg_{h}.surf.gii")
+        tpl_onavg_sphere_path = Path(cache_dir, f"tpl-onavg_hemi-{h}_den-{atlas[1]}_sphere-via_{atlas_fsavg[0]}.surf.gii")
+
         # initial individual register to fsaverage from fs_LR
         cmd = [
             "wb_command",
             "-surface-sphere-project-unproject",
-            Path(native_dir, f"{subject}.{h}.sphere.MSMAll.native.surf.gii").resolve(),
+            Path(native_dir, f"{subject}.{h}.sphere.MSMSulc.native.surf.gii").resolve(),
             Path(HCPPIPEDIR, "global", "templates", "standard_mesh_atlases", f"fsaverage.{h}_LR.spherical_std.164k_fs_LR.surf.gii").resolve(),
             Path(HCPPIPEDIR, "global", "templates", "standard_mesh_atlases", "resample_fsaverage", f"fs_LR-deformed_to-fsaverage.{h}.sphere.164k_fs_LR.surf.gii").resolve(),
             Path(outdir, f"{subject}.{h}.sphere.fsaverage_164k.native.surf.gii").resolve()
@@ -100,35 +111,35 @@ def register_to_onavg(
             "-surface-resample",
             Path(native_dir, f"{subject}.{h}.{surface}.native.surf.gii").resolve(),
             Path(outdir, f"{subject}.{h}.sphere.fsaverage_164k.native.surf.gii").resolve(),
-            Path(HCPPIPEDIR, "global", "templates", "standard_mesh_atlases", "resample_fsaverage", f"{atlas[0]}_std_sphere.{h}.{atlas[1]}_fsavg_{h}.surf.gii").resolve(),
+           fsavg_std_sphere_path.resolve(),
             "BARYCENTRIC",
-            Path(outdir, f"{subject}.{h}.{surface}.{atlas[1]}_fsavg_{h}.surf.gii").resolve()
+            Path(outdir, f"{subject}.{h}.{surface}.{atlas_fsavg[1]}_fsavg_{h}.surf.gii").resolve()
         ]
         subprocess.check_output(cmd)
 
         # now register onavg sphere to fsaverage
         onavg_sph = Sphere(*read_geometry(str(Path(cache_dir, f"onavg-{den}", "surf", f"{hemi}.sphere.reg").resolve())))
-        fs_sph = Sphere.from_gifti(str(Path(HCPPIPEDIR, "global", "templates", "standard_mesh_atlases", "resample_fsaverage", f"{atlas[0]}_std_sphere.{h}.{atlas[1]}_fsavg_{h}.surf.gii").resolve()))
+        fs_sph = Sphere.from_gifti(str(fsavg_std_sphere_path.resolve()))
         #mid = Surface.from_gifti('surfaces/100206.L.midthickness.native.surf.gii')
 
         ## register
-        if not Path.exists(Path(cache_dir, f"tpl-onavg_hemi-{h}_den-{atlas[1]}_sphere-{atlas[0]}.surf.gii").resolve()):
+        if not Path.exists(tpl_onavg_sphere_path.resolve()):
             fs_to_onavg_mat = fs_sph.barycentric(onavg_sph.coords)
             fs_onavg_coords = fs_sph.coords.T @ fs_to_onavg_mat
             fs_onavg_coords = fs_onavg_coords.T
 
             fs_onavg_sph = Sphere(fs_onavg_coords, onavg_sph.faces)
-            fs_onavg_sph.to_gifti(str(Path(cache_dir, f"tpl-onavg_hemi-{h}_den-{atlas[1]}_sphere-{atlas[0]}.surf.gii").resolve()))
+            fs_onavg_sph.to_gifti(str(tpl_onavg_sphere_path.resolve()))
 
         # perform final register
         cmd = [
             "wb_command",
             "-surface-resample",
-            Path(outdir, f"{subject}.{h}.{surface}.{atlas[1]}_fsavg_{h}.surf.gii").resolve(),
-            Path(HCPPIPEDIR, "global", "templates", "standard_mesh_atlases", "resample_fsaverage", f"{atlas[0]}_std_sphere.{h}.{atlas[1]}_fsavg_{h}.surf.gii").resolve(),
-            Path(cache_dir, f"tpl-onavg_hemi-{h}_den-{atlas[1]}_sphere-{atlas[0]}.surf.gii").resolve(),
+            Path(outdir, f"{subject}.{h}.{surface}.{atlas_fsavg[1]}_fsavg_{h}.surf.gii").resolve(),
+            fsavg_std_sphere_path.resolve(),
+            tpl_onavg_sphere_path.resolve(),
             "BARYCENTRIC",
-            Path(outdir, f"{subject}.{h}.{surface}.onavg-{den}.surf.gii").resolve()
+            Path(outdir, f"{subject}.{h}.{surface}.onavg-{den}_via_{atlas_fsavg[0]}.surf.gii").resolve()
         ]
         subprocess.check_output(cmd)
 
