@@ -8,7 +8,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "onavg_ind"
-version = "0.0.5"
+version = "0.1"
 authors = [
     { name="Ma Feilong", email="mafeilong@gmail.com" },
     { name="Nikitas Koussis", email="nikitas.koussis@gmail.com" },
