@@ -143,6 +143,155 @@ def register_to_onavg(
         ]
         subprocess.check_output(cmd)
 
+def native_to_onavg(
+        hcp_dir: Path | str, 
+        subject: str, 
+        surface: str = 'midthickness',
+        den: str = 'ico128', 
+        cache_dir: Path | str = None):
+    
+    # check for downloaded files
+    if cache_dir is None:
+        cache_dir = Path(os.environ['HOME'], 'onavg-template', parents=True, exist_ok=True).resolve()
+    
+    #native_dir = Path(hcp_dir, f"{subject}", "T1w", 'Native').resolve()
+    outdir = Path(hcp_dir, f"{subject}", "onavg").resolve()
+    if not outdir.exists():
+        outdir.mkdir()
+
+    if not Path.exists(Path(cache_dir, f'onavg-{den}')):
+        get_onavg(cache_dir)
+    
+    subj_cache_dir = Path(cache_dir, 'individual', f'{subject}').resolve()
+    if not subj_cache_dir.exists():
+        subj_cache_dir.mkdir(parents=True)
+
+    recon_dir = Path(hcp_dir, f"{subject}", "T1w", f"{subject}", "surf")
+    for hemi, h in zip(['lh', 'rh'], ['L', 'R']):
+        # now register onavg sphere to fsaverage
+        onavg_sph = Sphere(*read_geometry(str(Path(cache_dir, f"onavg-{den}", "surf", f"{hemi}.sphere.reg").resolve())))
+        native_sph = Sphere(*read_geometry(str(Path(recon_dir, f"{hemi}.sphere").resolve())))
+        #mid = Surface.from_gifti('surfaces/100206.L.midthickness.native.surf.gii')
+
+        ## register
+        native_to_onavg_mat = native_sph.barycentric(onavg_sph.coords)
+        native_onavg_coords = native_sph.coords.T @ native_to_onavg_mat
+        native_onavg_coords = native_onavg_coords.T
+
+        native_onavg_sph = Sphere(native_onavg_coords, onavg_sph.faces)
+        native_onavg_sph.to_gifti(str(Path(subj_cache_dir, f"{subject}.{h}.sphere.onavg-{den}.surf.gii").resolve()))
+
+        # convert recon-all native sphere to gifti for wb_command
+        cmd = [
+            "mris_convert",
+            Path(recon_dir, f"{hemi}.sphere").resolve(),
+            Path(subj_cache_dir, f"{subject}.{h}.sphere.native.surf.gii").resolve()
+        ]
+        subprocess.check_output(cmd)
+
+        if surface == 'midthickness':
+            cmd = [
+                "mris_convert",
+                Path(recon_dir, f"{hemi}.pial").resolve(),
+                Path(subj_cache_dir, f"{subject}.{h}.pial.native.surf.gii").resolve()
+            ]
+            subprocess.check_output(cmd)
+
+            cmd = [
+                "mris_convert",
+                Path(recon_dir, f"{hemi}.white").resolve(),
+                Path(subj_cache_dir, f"{subject}.{h}.white.native.surf.gii").resolve()
+            ]
+            subprocess.check_output(cmd)
+            cmd = [
+                "wb_command",
+                "-surface-average",
+                Path(subj_cache_dir, f"{subject}.{h}.{surface}.native.surf.gii").resolve(),
+                "-surf",
+                Path(subj_cache_dir, f"{subject}.{h}.white.native.surf.gii").resolve(),
+                "-surf",
+                Path(subj_cache_dir, f"{subject}.{h}.pial.native.surf.gii").resolve()
+            ]
+            subprocess.check_output(cmd)
+        
+        else:
+            cmd = [
+                "mris_convert",
+                Path(recon_dir, f"{hemi}.{surface}").resolve(),
+                Path(subj_cache_dir, f"{subject}.{h}.{surface}.native.surf.gii").resolve()
+            ]
+            subprocess.check_output(cmd)
+            
+        # convert desired onavg-ico density to gifti
+        # cmd = [
+        #     "mris_convert",
+        #     Path(cache_dir, f"onavg-{den}", "surf", f"{hemi}.sphere")
+        # ]
+
+        # resample native midthickness to onavg using above sphere
+        cmd = [
+            "wb_command",
+            "-surface-resample",
+            Path(subj_cache_dir, f"{subject}.{h}.{surface}.native.surf.gii").resolve(),
+            Path(subj_cache_dir, f"{subject}.{h}.sphere.native.surf.gii").resolve(),
+            Path(subj_cache_dir, f"{subject}.{h}.sphere.onavg-{den}.surf.gii").resolve(),
+            "BARYCENTRIC",
+            Path(outdir, f"{subject}.{h}.{surface}.onavg-{den}.v2.surf.gii").resolve()
+        ]
+        subprocess.check_output(cmd)
+
+def native_to_fsaverage(
+        hcp_dir: Path | str, 
+        subject: str, 
+        surface: str = 'midthickness',
+        den: str = 'fsaverage5', 
+        cache_dir: Path | str = None):
+    
+    # check atlas
+    den_fsavg = ATLAS[den]
+
+    hcp_dir = Path(hcp_dir).resolve()
+    # check for downloaded files
+    if cache_dir is None:
+        cache_dir = Path(os.environ['HOME'], 'onavg-template', parents=True, exist_ok=True).resolve()
+
+    recon_dir = Path(hcp_dir, f"{subject}", "T1w", f"{subject}", "surf")
+    subj_cache_dir = Path(cache_dir, "individual", f"{subject}").resolve()
+    FS_HOME = Path(os.environ['FREESURFER_HOME']).resolve()
+    temp_dir = Path(FS_HOME, "subjects", f"{den}", "surf").resolve()
+
+    outdir = Path(hcp_dir, f"{subject}", "MNINonLinear", f"{den}_{den_fsavg}").resolve()
+    if not outdir.exists():
+        outdir.mkdir()
+
+    for hemi, h in zip(['lh', 'rh'], ['L', 'R']):
+        # register native to fsaverage
+        cmd = [
+            "mris_convert",
+            Path(recon_dir, f"{hemi}.sphere.reg"),
+            Path(subj_cache_dir, f"{subject}.{h}.sphere.reg.native.surf.gii"),
+        ]
+        subprocess.check_output(cmd)
+
+        cmd = [
+            "mris_convert",
+            Path(temp_dir, f"{hemi}.sphere"),
+            Path(cache_dir, f"{den}.{h}.sphere.surf.gii"),
+        ]
+        subprocess.check_output(cmd)
+
+        cmd = [
+            "wb_command",
+            "-surface-resample",
+            Path(hcp_dir, f"{subject}", "MNINonLinear", "Native", f"{subject}.{h}.{surface}.native.surf.gii"),
+            Path(subj_cache_dir, f"{subject}.{h}.sphere.reg.native.surf.gii"),
+            Path(cache_dir, f"{den}.{h}.sphere.surf.gii"),
+            "BARYCENTRIC",
+            Path(outdir, f"{subject}.{h}.{surface}.{den}_{den_fsavg}.surf.gii"),
+        ]
+        subprocess.check_output(cmd)
+
+
 def main():
     parser = ArgumentParser()
     parser.add_argument("HCPdir", help="path to post-HCP subject folders")
